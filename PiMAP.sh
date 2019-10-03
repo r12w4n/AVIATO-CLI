@@ -10,6 +10,8 @@ read -p "${red}Enter IP Address/ IP Range : " iprange
 mkdir /var/www/html/$name
 mkdir $name-nmap-reports && cd $name-nmap-reports
 echo "${reset}"
+wget -p /usr/share/nmap/scripts https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/vulners.nse
+git clone https://github.com/vulnersCom/nmap-vulners.git /usr/share/nmap/scripts
 wget https://raw.githubusercontent.com/r12w4n/AVIATO-CLI/master/nmap-bootstrap.xsl
 wget https://github.com/r12w4n/AVIATO-CLI/raw/master/DisplayDirectoryContents.zip
 unzip DisplayDirectoryContents.zip -d /var/www/html/$name
