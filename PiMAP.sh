@@ -9,7 +9,7 @@ read -p "${red}Enter the Project Name : " name
 read -p "${red}Enter IP Address/ IP Range : " iprange
 mkdir $name-nmap-reports && cd $name-nmap-reports
 echo "${reset}"
-wget https://raw.githubusercontent.com/honze-net/nmap-bootstrap-xsl/master/nmap-bootstrap.xsl
+wget https://raw.githubusercontent.com/r12w4n/AVIATO-CLI/master/nmap-bootstrap.xsl
 git clone https://github.com/ralphbean/ansi2html.git && cd ansi2html && chmod +x setup.py && ./setup.py install && cd ..
 read -p "Start Scanning ? y/n " ss
 	while true; do echo -n .; sleep 1; done &
