@@ -10,8 +10,8 @@ read -p "${red}Enter IP Address/ IP Range : " iprange
 mkdir /var/www/html/$name
 mkdir $name-nmap-reports && cd $name-nmap-reports
 echo "${reset}"
-#wget https://raw.githubusercontent.com/r12w4n/AVIATO-CLI/master/nmap-bootstrap.xsl
-wget https://raw.githubusercontent.com/honze-net/nmap-bootstrap-xsl/master/nmap-bootstrap.xsl
+wget https://raw.githubusercontent.com/r12w4n/AVIATO-CLI/master/nmap-bootstrap.xsl
+#wget https://raw.githubusercontent.com/honze-net/nmap-bootstrap-xsl/master/nmap-bootstrap.xsl
 wget https://github.com/r12w4n/AVIATO-CLI/raw/master/DisplayDirectoryContents.zip
 unzip DisplayDirectoryContents.zip -d /var/www/html/$name
 
@@ -46,8 +46,8 @@ read -p "Start Scanning ? y/n " ss
                 kill $!
                 exit 0
 	fi
-		rm -rf ansi2html nmap-bootstrap.xsl
-                cp `find . -type f \( -iname \*.xml -o -iname \*.html \)` /var/www/html/$name/
+		rm -rf ansi2html
+                cp `find . -type f \( -iname \*.xml -o -iname \*.html -o -iname \*.xsl \)` /var/www/html/$name/
                 kill $!
                 exit 0
 
