@@ -1,7 +1,11 @@
 #!/bin/bash
-red=`tput setaf 1`
-green=`tput setaf 2`
-reset=`tput sgr0`
+
+VERSION="1.0"
+
+
+RED=`tput setaf 1`
+GREEN=`tput setaf 2`
+RESET=`tput sgr0`
 
 function trap_ctrlc ()
 {
@@ -14,58 +18,66 @@ function trap_ctrlc ()
 
 trap "trap_ctrlc" 2 
 
-#echo "${red}red text ${green}green text${reset}"
-sudo apt-get install ccze -y
-read -p "${red}Enter the Project Name : " name
-read -p "${red}Enter IP Address/ IP Range : " iprange
-mkdir /var/www/html/$name
-mkdir $name-nmap-reports && cd $name-nmap-reports
-echo "${reset}"
-wget https://raw.githubusercontent.com/r12w4n/AVIATO-CLI/master/nmap-bootstrap.xsl
-#wget https://raw.githubusercontent.com/honze-net/nmap-bootstrap-xsl/master/nmap-bootstrap.xsl
-wget https://github.com/r12w4n/AVIATO-CLI/raw/master/DisplayDirectoryContents.zip
-unzip DisplayDirectoryContents.zip -d /var/www/html/$name
+reportdir(){
+    echo -e "${GREEN}[+] Creating results directory.${RESET}"
+    mkdir -p $name-aviato-reports && cd $name-aviato-reports
 
-git clone https://github.com/ralphbean/ansi2html.git && cd ansi2html && chmod +x setup.py && ./setup.py install && cd ..
-read -p "Start Scanning ? y/n " ss
-	while true; do echo -n .; sleep 1; done &
-	trap 'kill $!' SIGTERM SIGKILL
+}
 
-	if [[ $ss = "y" ]]; then
+lhd_scan(){
+	echo "${GREEN}[+]Logging Live Host ${RESET}"
+        nmap -oG grepable-$name $iprange
+        cat grepable-$name | grep Up | cut -d ' ' -f 2 | sort -u > $name-livehost.txt
+        cat $name-livehost.txt
+        echo "${GREEN}[+]Logging Live Host Done ${RESET}"
+}
 
-	echo "${green}Logging Live Host ${reset}"
-	nmap -oG  $name-grepable.txt $iprange
-	cat $name-grepable.txt | grep Up | cut -d ' ' -f 2 | sort -u > $name-livehost.txt
-	cat $name-livehost.txt
-	echo "${green}Logging Live Host Done ${reset}"
+basic_scan(){
+	echo "${GREEN}Scanning Started ${RESET}"
+        nmap -A -oA basic_scan_$name $iprange | ccze -A | ansi2html > raw_basic_scan_$name.html
+        echo "${GREEN}Main Scan Done ${RESET}"
+	sleep 10
+	xsltproc -o basic_scan_$name.html ../nmap-bootstrap.xsl basic_scan_$name.xml
 
-	echo "${green}Scanning Started ${reset}"
-	nmap -A -oA $name --stylesheet nmap-bootstrap.xsl $iprange | ccze -A | ansi2html > $name.html
-	echo "${green}Main Scan Done ${reset}"
+}
 
-	echo "${green}Scanning for vulnerabilities CVE in live host ${reset}"
-	nmap -oA $name-vulners --stylesheet nmap-bootstrap.xsl -sV $iprange --script vulners.nse | ccze -A | ansi2html > $name-vulners.html
-	echo "${green}Vulnerability Scanning Done ${reset}"
+vulners_cve(){
+	echo "${GREEN}Scanning for vulnerabilities CVE in live host ${RESET}"
+        nmap -oA vulners_scan_$name -sV $iprange --script vulners.nse | ccze -A | ansi2html > raw_vulners_$name.html
+        echo "${green}Vulnerability Scanning Done ${reset}"
+	sleep 20
+	xsltproc -o vulners_scan_$name.html ../nmap-bootstrap.xsl vulners_scan_$name.xml
+}
 
-	read -p "Do you want perform Advance Vulnerabilty Scan? y/n" avs
+adv_scan(){
+	echo "${GREEN}Advance Vulnerabilty Scan Started ${RESET}"
+        nmap -oA advance_vuln_$name -sV $iprange --script=vulscan/vulscan.nse | ccze -A | ansi2html > raw_advance-vuln.html
+	sleep 10
+	xsltproc -o advance_vuln_$name.html ../nmap-bootstrap.xsl advance_vuln_$name.xml
+	echo "${GREEN}Advance Vulnerabilty Scan Completed ${RESET}"
 
-	if [[ $avs = "y" ]]; then
+}
 
-		echo "${green}Advance Vulnerabilty Scan Started ${reset}"
-		nmap -oA $name-advance-vuln --stylesheet nmap-bootstrap.xsl -sV $iprange --script=vulscan/vulscan.nse -script-args vulscanoutput=details | ccze -A | ansi2html > $name-advance-vuln.html
-		echo "${green}Advance Vulnerabilty Scan Completed ${reset}"
-		rm -rf ansi2html
-                service apache2 start
-		echo "Apache2 Web Server Started"
-		cp `find . -type f \( -iname \*.xml -o -iname \*.html -o -iname \*.xsl \)` /var/www/html/$name/
-                kill $!
-                exit 0
-	fi
-		rm -rf ansi2html
-                cp `find . -type f \( -iname \*.xml -o -iname \*.html -o -iname \*.xsl \)` /var/www/html/$name/
-                kill $!
-                exit 0
+csv_convert(){
+cd ..
+./nmap-converter.py -o $name-aviato-reports/basic_scan_$name.xlsx $name-aviato-reports/basic_scan_$name.xml
+./nmap-converter.py -o $name-aviato-reports/vulners_scan_$name.xlsx $name-aviato-reports/vulners_scan_$name.xml
+}
+read -p "${RED}Enter the Project Name : ${RESET}" name
+read -p "${RED}Enter IP Address/ IP Range :${RESET} " iprange
 
+#read -p "Start Scanning ? y/n " ss
+reportdir
+lhd_scan
+basic_scan
+vulners_cve
+csv_convert
+
+read -p "Do you want to run advance Vulnerability scan ? y/n " ss
+if [[ $ss = 'y' ]]
+then
+	adv_scan
+
+else
+	exit 0 
 fi
-	kill $!
-	exit 0
