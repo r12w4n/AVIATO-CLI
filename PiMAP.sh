@@ -26,9 +26,7 @@ echo -e "${GREEN}
 ██║  ██║ ╚████╔╝ ██║██║  ██║   ██║   ╚██████╔╝
 ╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝                                           	    
  _           _ _              ()            _            ____  
-//\utomated  \\/ulnerability  []ntegrated  //\ssessment   L| ool ${RESET} ${RED}v$VERSION${RESET}  
-                                           ${GREEN}|__|${RESET}    by ${}@R12W4N{RESET}\n
-"                                                               
+//\utomated  \\/ulnerability  []ntegrated  //\ssessment   L| ool ${RESET}"                                                               
 
 }
 trap "trap_ctrlc" 2 
