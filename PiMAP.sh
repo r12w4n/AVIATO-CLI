@@ -16,6 +16,21 @@ function trap_ctrlc ()
     exit 2
 }
 
+banner(){
+echo -e "${GREEN}
+
+ █████╗ ██╗   ██╗██╗ █████╗ ████████╗ ██████╗ 
+██╔══██╗██║   ██║██║██╔══██╗╚══██╔══╝██╔═══██╗
+███████║██║   ██║██║███████║   ██║   ██║   ██║
+██╔══██║╚██╗ ██╔╝██║██╔══██║   ██║   ██║   ██║
+██║  ██║ ╚████╔╝ ██║██║  ██║   ██║   ╚██████╔╝
+╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝                                           	    
+ _           _ _              ()            _            ____  
+//\utomated  \\/ulnerability  []ntegrated  //\ssessment   L| ool ${RESET} ${RED}v$VERSION${RESET}  
+                                           ${GREEN}|__|${RESET}    by ${}@R12W4N{RESET}\n
+"                                                               
+
+}
 trap "trap_ctrlc" 2 
 
 reportdir(){
