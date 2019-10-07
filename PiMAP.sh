@@ -6,7 +6,7 @@ VERSION="1.0"
 RED=`tput setaf 1`
 GREEN=`tput setaf 2`
 RESET=`tput sgr0`
-BOLD='tput bold'
+BLUE=`tput setaf 4`
 function trap_ctrlc ()
 {
     echo "Ctrl-C caught...performing clean up"
@@ -78,7 +78,8 @@ cd ..
 ./nmap-converter.py -o $name-aviato-reports/basic_scan_$name.xlsx $name-aviato-reports/basic_scan_$name.xml
 ./nmap-converter.py -o $name-aviato-reports/vulners_scan_$name.xlsx $name-aviato-reports/vulners_scan_$name.xml
 }
-echo "${BOLD} Don't forget to run it under screen ... ${RESET}"
+banner
+echo "${BLUE}[+] Don't forget to run it under screen ... ${RESET}"
 read -p "${RED}Enter the Project Name : ${RESET}" name
 read -p "${RED}Enter IP Address/ IP Range :${RESET} " iprange
 
