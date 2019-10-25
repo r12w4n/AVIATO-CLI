@@ -86,7 +86,6 @@ reportdir
 lhd_scan
 basic_scan
 vulners_cve
-csv_convert
 
 read -p "Do you want to run advance Vulnerability scan ? y/n " ss
 if [[ $ss = 'y' ]]
