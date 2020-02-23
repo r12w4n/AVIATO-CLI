@@ -3,7 +3,6 @@
 #description:   Automated Script to Scan Vulnerability in Network
 #author:        R12W4N
 #==============================================================================
-
 RED=`tput setaf 1`
 GREEN=`tput setaf 2`
 RESET=`tput sgr0`
@@ -15,6 +14,16 @@ function trap_ctrlc ()
     echo "Doing cleanup"
     trap "kill 0" EXIT
     exit 2
+}
+
+function progressBar()
+{
+    echo -ne "Please wait\n"
+    while true
+    do
+        echo -n "${BLUE}#"
+        sleep 2
+    done
 }
 
 banner(){
@@ -45,7 +54,7 @@ options[7]="${GREEN}HTTP Enumeration${RESET}"
 options[8]="${GREEN}VNC Vuln + SNMP Brute${RESET}"
 
 reportdir(){
-    echo -e "${RED}[+] Creating results directory.${RESET}"
+    echo -e "\n${RED}[+] Creating results directory.${RESET}"
     mkdir -p $name-aviato-reports && cd $name-aviato-reports
     mkdir HTML-Reports raw && mkdir raw/http raw/vnc
 
@@ -53,83 +62,138 @@ reportdir(){
 
 lhd_scan(){
 	    
-        echo "${GREEN}[+]Running Localhost Discovery ${BLUE}"
+        echo -e "\n${GREEN}[+]Running Localhost Discovery ${RESET}"
         nmap -sP -oG grepable-$name $iprange
         cat grepable-$name | grep Up | cut -d ' ' -f 2 | sort -u > $name-livehost.txt
         cat $name-livehost.txt
-        echo "${GREEN}[+]Logging Live Host Done ${RESET}"
+        echo -e "\n${GREEN}[+]Logging Live Host Done ${RESET}"
 	
 }
 
 basic_scan(){
 	    
-        echo "${GREEN}Basic Enumeration ${BLUE}"
-        nmap -A -oA basic_scan_$name $iprange | ccze -A | ansi2html > raw/raw_basic_scan_$name.html
-        echo "${GREEN}Main Scan Done ${RESET}"
+        echo -e "\n${GREEN}Basic Enumeration ${RESET}"
+        #Start in background
+	progressBar &
+	#Save PID progressBar to variable
+	MYSELF=$!
+	nmap -A -oA basic_scan_$name $iprange | ccze -A | ansi2html > raw/raw_basic_scan_$name.html
+        echo -e "\n${GREEN}Main Scan Done ${RESET}"
 	sleep 20
 	xsltproc -o HTML-Reports/basic_scan_$name.html ../nmap-bootstrap.xsl basic_scan_$name.xml
 	sleep 20
+	#kill progressBar function
+	kill $MYSELF > /dev/null 2>&1
+	echo -e "\n${GREEN}Main Scan Report Generated ${RESET}"
+
 }
 
 vulners_cve(){
 	    
-        echo "${GREEN}Scanning for vulnerabilities CVE in live host ${BLUE}"
+        echo -e "\n${GREEN}Scanning for vulnerabilities CVE in live host ${BLUE}"
+	#Start in background
+	progressBar &
+	#Save PID progressBar to variable
+	MYSELF=$!
         nmap -Pn -oA vulners_scan_$name -sV --script vulners --script-args mincvss=7.0 $iprange | ccze -A | ansi2html > raw/raw_vulners_$name.html
-        echo "${green}Vulnerability Scanning Done ${reset}"
+        echo -e "\n${GREEN}Vulnerability Scanning Done ${reset}"
 	sleep 20
 	xsltproc -o HTML-Reports/vulners_scan_$name.html ../nmap-bootstrap.xsl vulners_scan_$name.xml
 	sleep 20
+	#kill progressBar function
+	kill $MYSELF > /dev/null 2>&1
+        echo -e "\n${GREEN} Report Generated ${RESET}"
+
         #nmap -Pn -oA Dvuln_scan_$name -sV $iprange --script vuln | ccze -A | ansi2html > Dvuln_scan_$name.html
 	#xsltproc -o Dvuln_scan_$name.html ../nmap-bootstrap.xsl Dvuln_scan_$name.xml
 
 }
 
 adv_scan(){
-	echo "${GREEN}Advance Vulnerabilty Scan Started ${BLUE}"
-        nmap -oA advance_vuln_$name -sV $iprange --script=vulscan/vulscan.nse --script-args vulscandb=exploitdb.csv | ccze -A | ansi2html > raw/raw_advance-vuln.html
-	echo "${GREEN}Advance Vulnerabilty Scan Completed ${BLUE}"
+	echo -e "\n${GREEN}Advance Vulnerabilty Scan Started ${BLUE}"
+        #Start in background
+	progressBar &
+	#Save PID progressBar to variable
+	MYSELF=$!
+	nmap -oA advance_vuln_$name -sV $iprange --script=vulscan/vulscan.nse --script-args vulscandb=exploitdb.csv | ccze -A | ansi2html > raw/raw_advance-vuln.html
+	echo -e "\n${GREEN}Advance Vulnerabilty Scan Completed ${BLUE}"
 	sleep 40
 	xsltproc -o HTML-Reports/advance_vuln_$name.html ../nmap-bootstrap.xsl advance_vuln_$name.xml
 	sleep 40
+	#kill progressBar function
+	kill $MYSELF > /dev/null 2>&1
+	echo -e "\n${GREEN} Report Generated ${RESET}"
+
 }
 
 MS17_010(){
-	echo "${GREEN}Eternalblue Doublepulsar Scan Initiated ${BLUE}"
-  	nmap -oA Eternal_MS17_010_$name -Pn -p445 --open --max-hostgroup 3 --script smb-vuln-ms17-010 $iprange | ccze -A | ansi2html > raw/raw_ms17_010.html
-        echo "${GREEN}Advance Vulnerabilty Scan Completed ${RESET}"
+	echo -e "\n${GREEN}Eternalblue Doublepulsar Scan Initiated ${BLUE}"
+  	#Start in background
+	progressBar &
+	#Save PID progressBar to variable
+	MYSELF=$!
+	nmap -oA Eternal_MS17_010_$name -Pn -p445 --open --max-hostgroup 3 --script smb-vuln-ms17-010 $iprange | ccze -A | ansi2html > raw/raw_ms17_010.html
+        echo -e "\n${GREEN}Eternalblue Doublepulsar Scan Completed ${RESET}"
 	sleep 20
 	xsltproc -o HTML-Reports/Eternal_MS17_010_$name.html ../nmap-bootstrap.xsl Eternal_MS17_010_$name.xml
 	sleep 20
+	#kill progressBar function
+	kill $MYSELF > /dev/null 2>&1
+        echo -e "\n${GREEN}Report Generated ${RESET}"
+
 }
 
 anonftp(){
            # Anonymous FTP
-           echo "${GREEN}Scanning for Anonymous FTP ${BLUE}"
-           nmap -oA AnonymousFTP_$name -v -p 21 --script=ftp-anon.nse $iprange | ccze -A | ansi2html > raw/raw_anonftp.html
+           echo -e"\n${GREEN}Scanning for Anonymous FTP ${RESET}"
+	   #Start in background
+	   progressBar &
+	   #Save PID progressBar to variable
+	   MYSELF=$!
+	   nmap -oA AnonymousFTP_$name -v -p 21 --script=ftp-anon.nse $iprange | ccze -A | ansi2html > raw/raw_anonftp.html
            sleep 10
-           echo "${GREEN}Anonymous FTP Scan Completed ${RESET}"
+           echo -e "\n${GREEN}Anonymous FTP Scan Completed ${RESET}"
 	   sleep 20
 	   xsltproc -o HTML-Reports/AnonymousFTP_$name.html ../nmap-bootstrap.xsl AnonymousFTP_$name.xml
-	   sleep 20 
+	   sleep 20
+	   #kill progressBar function
+	   kill $MYSELF > /dev/null 2>&1
+	   echo -e "\n${GREEN}Report Generated ${RESET}"
+ 
 }
 
 routerweblogin(){
-        echo "${GREEN}Scanning for any Router Web Portal${BLUE}"
+        echo -e "\n${GREEN}Scanning for any Router Web Portal${RESET}"
+	#Start in background
+	progressBar &
+	#Save PID progressBar to variable
+	MYSELF=$!
         #Router / Wireless Web Login
         nmap -oA RouterWebLogin_$name -sS -sV -vv -n -Pn -T5 $iprange -p80 -oG - | grep 'open' | grep -v 'tcpwrapped' | ccze -A | ansi2html > raw/raw_RouterWebLogin.html
-        echo "${GREEN}Scan Completed${RESET}"
+        echo -e "\n${GREEN}Scan Completed${RESET}"
 	sleep 20
 	xsltproc -o HTML-Reports/RouterWebLogin_$name.html ../nmap-bootstrap.xsl RouterWebLogin_$name.xml
 	sleep 20
+	#kill progressBar function
+	kill $MYSELF > /dev/null 2>&1
+	echo -e "\n${GREEN} Report Generated ${RESET}"
+
 }
 
 smtpnsmb(){
     # SMTP and Samba Vulnerabilities
-        nmap --script smtp-vuln-* -p 25  $iprange > raw/smtp.txt
+        #Start in background
+	progressBar &
+	#Save PID progressBar to variable
+	MYSELF=$!
+	nmap --script smtp-vuln-* -p 25  $iprange > raw/smtp.txt
         nmap --script smb-vuln-* -p 445 $iprange > raw/smb-vuln.txt
         nmap --script ftp-vuln-* -p 21 $iprange > raw/ftpvuln.txt
         nmap --script smb-enum-shares.nse -p445 $iprange > raw/smbshare.txt 
         nmap --script smb-os-discovery.nse -p445 $iprange > raw/smbosdiscovery.txt
+	#kill progressBar function
+	kill $MYSELF > /dev/null 2>&1
+
 }
 
 http_enum(){
