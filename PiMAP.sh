@@ -47,110 +47,120 @@ options[8]="${GREEN}VNC Vuln + SNMP Brute${RESET}"
 reportdir(){
     echo -e "${RED}[+] Creating results directory.${RESET}"
     mkdir -p $name-aviato-reports && cd $name-aviato-reports
+    mkdir HTML-Reports raw && mkdir raw/http raw/vnc
 
 }
 
 lhd_scan(){
 	    
-        echo "${GREEN}[+]Logging Live Host ${BLUE}"
-        nmap -sP -T4 -oG grepable-$name $iprange
+        echo "${GREEN}[+]Running Localhost Discovery ${BLUE}"
+        nmap -sP -oG grepable-$name $iprange
         cat grepable-$name | grep Up | cut -d ' ' -f 2 | sort -u > $name-livehost.txt
         cat $name-livehost.txt
         echo "${GREEN}[+]Logging Live Host Done ${RESET}"
-
+	
 }
 
 basic_scan(){
 	    
-        echo "${GREEN}Scanning Started ${BLUE}"
-        nmap -A -T4 -oA basic_scan_$name $iprange | ccze -A | ansi2html > raw_basic_scan_$name.html
-        nmap -A -T4 -sU -P0 -p7,13,19,53,69,123,137,161,500,1434,1645,1812,2483,2484,3306 udp_basic_scan_$name $iprange  | ccze -A | ansi2html > raw_udp_basic_scan_$name.html
+        echo "${GREEN}Basic Enumeration ${BLUE}"
+        nmap -A -oA basic_scan_$name $iprange | ccze -A | ansi2html > raw/raw_basic_scan_$name.html
         echo "${GREEN}Main Scan Done ${RESET}"
-	    sleep 20
-	    xsltproc -o basic_scan_$name.html ../nmap-bootstrap.xsl basic_scan_$name.xml
-
+	sleep 20
+	xsltproc -o HTML-Reports/basic_scan_$name.html ../nmap-bootstrap.xsl basic_scan_$name.xml
+	sleep 20
 }
 
 vulners_cve(){
 	    
         echo "${GREEN}Scanning for vulnerabilities CVE in live host ${BLUE}"
-        nmap -Pn -oA Dvuln_scan_$name -sV -T4 $iprange --script vuln | ccze -A | ansi2html > Dvuln_scan_$name.html
-        nmap -Pn -oA vulners_scan_$name -sV --script vulners --script-args mincvss=7.0 $iprange | ccze -A | ansi2html > raw_vulners_$name.html
+        nmap -Pn -oA vulners_scan_$name -sV --script vulners --script-args mincvss=7.0 $iprange | ccze -A | ansi2html > raw/raw_vulners_$name.html
         echo "${green}Vulnerability Scanning Done ${reset}"
-	    sleep 20
-	    xsltproc -o vulners_scan_$name.html ../nmap-bootstrap.xsl vulners_scan_$name.xml
-        xsltproc -o Dvuln_scan_$name.html ../nmap-bootstrap.xsl Dvuln_scan_$name.xml
+	sleep 20
+	xsltproc -o HTML-Reports/vulners_scan_$name.html ../nmap-bootstrap.xsl vulners_scan_$name.xml
+	sleep 20
+        #nmap -Pn -oA Dvuln_scan_$name -sV $iprange --script vuln | ccze -A | ansi2html > Dvuln_scan_$name.html
+	#xsltproc -o Dvuln_scan_$name.html ../nmap-bootstrap.xsl Dvuln_scan_$name.xml
 
 }
 
 adv_scan(){
-	    echo "${GREEN}Advance Vulnerabilty Scan Started ${BLUE}"
-        nmap -oA advance_vuln_$name -sV -T4 $iprange --script=vulscan/vulscan.nse --script-args vulscandb=exploitdb.csv | ccze -A | ansi2html > raw_advance-vuln.html
-	    sleep 20
-	    xsltproc -o advance_vuln_$name.html ../nmap-bootstrap.xsl advance_vuln_$name.xml
-	    echo "${GREEN}Advance Vulnerabilty Scan Completed ${BLUE}"
-
+	echo "${GREEN}Advance Vulnerabilty Scan Started ${BLUE}"
+        nmap -oA advance_vuln_$name -sV $iprange --script=vulscan/vulscan.nse --script-args vulscandb=exploitdb.csv | ccze -A | ansi2html > raw/raw_advance-vuln.html
+	echo "${GREEN}Advance Vulnerabilty Scan Completed ${BLUE}"
+	sleep 40
+	xsltproc -o HTML-Reports/advance_vuln_$name.html ../nmap-bootstrap.xsl advance_vuln_$name.xml
+	sleep 40
 }
 
 MS17_010(){
-	    echo "${GREEN}Eternalblue Doublepulsar Scan Initiated ${BLUE}"
-  	    nmap -oA Eternal_MS17_010_$name -Pn -p445 --open --max-hostgroup 3 --script smb-vuln-ms17-010 $iprange | ccze -A | ansi2html > raw_ms17_010.html
-        sleep 10
-        xsltproc -o Eternal_MS17_010_$name.html ../nmap-bootstrap.xsl Eternal_MS17_010_$name.xml
+	echo "${GREEN}Eternalblue Doublepulsar Scan Initiated ${BLUE}"
+  	nmap -oA Eternal_MS17_010_$name -Pn -p445 --open --max-hostgroup 3 --script smb-vuln-ms17-010 $iprange | ccze -A | ansi2html > raw/raw_ms17_010.html
         echo "${GREEN}Advance Vulnerabilty Scan Completed ${RESET}"
-
+	sleep 20
+	xsltproc -o HTML-Reports/Eternal_MS17_010_$name.html ../nmap-bootstrap.xsl Eternal_MS17_010_$name.xml
+	sleep 20
 }
 
 anonftp(){
-        # Anonymous FTP
-        echo "${GREEN}Scanning for Anonymous FTP ${BLUE}"
-        nmap -oA AnonymousFTP_$name -v -p 21 --script=ftp-anon.nse $iprange | ccze -A | ansi2html > raw_anonftp.html
-        sleep 10
-        xsltproc -o AnonymousFTP_$name.html ../nmap-bootstrap.xsl AnonymousFTP_$name.xml
-        echo "${GREEN}Anonymous FTP Scan Completed ${RESET}"
+           # Anonymous FTP
+           echo "${GREEN}Scanning for Anonymous FTP ${BLUE}"
+           nmap -oA AnonymousFTP_$name -v -p 21 --script=ftp-anon.nse $iprange | ccze -A | ansi2html > raw/raw_anonftp.html
+           sleep 10
+           echo "${GREEN}Anonymous FTP Scan Completed ${RESET}"
+	   sleep 20
+	   xsltproc -o HTML-Reports/AnonymousFTP_$name.html ../nmap-bootstrap.xsl AnonymousFTP_$name.xml
+	   sleep 20 
 }
 
 routerweblogin(){
         echo "${GREEN}Scanning for any Router Web Portal${BLUE}"
-        # Router / Wireless Web Login
-        nmap -oA RouterWebLogin_$name -sS -sV -vv -n -Pn -T5 $iprange -p80 -oG - | grep 'open' | grep -v 'tcpwrapped' | ccze -A | ansi2html > raw_RouterWebLogin.html
-        xsltproc -o RouterWebLogin_$name.html ../nmap-bootstrap.xsl RouterWebLogin_$name.xml
+        #Router / Wireless Web Login
+        nmap -oA RouterWebLogin_$name -sS -sV -vv -n -Pn -T5 $iprange -p80 -oG - | grep 'open' | grep -v 'tcpwrapped' | ccze -A | ansi2html > raw/raw_RouterWebLogin.html
         echo "${GREEN}Scan Completed${RESET}"
+	sleep 20
+	xsltproc -o HTML-Reports/RouterWebLogin_$name.html ../nmap-bootstrap.xsl RouterWebLogin_$name.xml
+	sleep 20
 }
 
 smtpnsmb(){
     # SMTP and Samba Vulnerabilities
-        nmap --script smtp-vuln-* -p 25  $iprange > smtp.txt
-        nmap --script smb-vuln-* -p 445 $iprange > smb-vuln.txt
-        nmap --script ftp-vuln-* -p 21 $iprange > ftpvuln.txt
-        nmap --script smb-enum-shares.nse -p445 $iprange > smbshare.txt 
-        nmap --script smb-os-discovery.nse -p445 $iprange > smbosdiscovery.txt
+        nmap --script smtp-vuln-* -p 25  $iprange > raw/smtp.txt
+        nmap --script smb-vuln-* -p 445 $iprange > raw/smb-vuln.txt
+        nmap --script ftp-vuln-* -p 21 $iprange > raw/ftpvuln.txt
+        nmap --script smb-enum-shares.nse -p445 $iprange > raw/smbshare.txt 
+        nmap --script smb-os-discovery.nse -p445 $iprange > raw/smbosdiscovery.txt
 }
 
 http_enum(){
         # HTTP Enum
         nmap --script http-enum $iprange > httpenum.txt
         # HTTP Title
-        nmap --script http-title -sV -p80,443 $iprange > httptitle.txt
+        nmap --script http-title -sV -p80,443 $iprange > raw/http/httptitle.txt
         # HTTP Vulnreability CVE2010-2861
-        nmap -v -p80,443 --script http-vuln-cve2010-2861 $iprange> httpvuln.txt
+        nmap -v -p80,443 --script http-vuln-cve2010-2861 $iprange> raw/http/httpvuln.txt
 
 }
 
 vnc_scan(){
         # VNC Title
-        nmap -sV --script=vnc-title $iprange > vnctitle.txt
+        nmap -sV --script=vnc-title $iprange > raw/vnc/vnctitle.txt
         # VNC Brute
-        nmap --script vnc-brute -p 5900 $iprange > vncbrute.txt
+        nmap --script vnc-brute -p 5900 $iprange > raw/vnc/vncbrute.txt
         # Auth RealVNC Bypass
-        nmap -sV --script=realvnc-auth-bypass $iprange > vncbypass.txt
+        nmap -sV --script=realvnc-auth-bypass $iprange > raw/vnc/vncbypass.txt
 }
 
 snmp(){
 	# SNMP Brute Force
-	nmap -sU --sript snmp-brute $iprange --sript-args snmp-brute.communitiesdb=snmp-community.txt > snmpbrute.txt
+	nmap -sU --sript snmp-brute $iprange --sript-args snmp-brute.communitiesdb=snmp-community.txt > raw/snmpbrute.txt
 }
 
+reporter(){
+	echo "Uploading Generated Reported On Web"
+	#on the way
+
+}
 
 #Actions to take based on selection
 function ACTIONS {
@@ -159,21 +169,25 @@ function ACTIONS {
         echo "Option 1 selected"
 	lhd_scan
 	basic_scan
+	
     fi
     if [[ ${choices[1]} ]]; then
         #Option 2 selected
         echo "Option 2 selected"
 	vulners_cve
+	
     fi
     if [[ ${choices[2]} ]]; then
         #Option 3 selected
         echo "Option 3 selected"
 	adv_scan
+	
     fi
     if [[ ${choices[3]} ]]; then
         #Option 4 selected
         echo "Option 4 selected"
 	MS17_010
+	
     fi
     if [[ ${choices[4]} ]]; then
         #Option 5 selected
@@ -184,6 +198,7 @@ function ACTIONS {
         #Option 6 selected
         echo "Option 6 selected"
 	routerweblogin
+	
     fi
     if [[ ${choices[6]} ]]; then
         #Option 7 selected
