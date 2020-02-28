@@ -99,7 +99,8 @@ EOF
 
 
 sudo systemctl start rc-local.service
-sudo systemctl status rc-local.service
+sudo systemctl status --no-pager rc-local.service
+echo "${GREEN}ssh $FalconName@$cncip -p $FUID ${RESET}"
 }
 
 setup
