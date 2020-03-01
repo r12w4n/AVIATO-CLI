@@ -24,6 +24,17 @@ function trap_ctrlc ()
 }
 trap "trap_ctrlc" 2 
 
+function test(){
+falconmodules=modules/
+if [[ ! -d "$falconmodules" ]]; then
+    echo "${RED} $falconmodules Directory Not Exist ${RESET}"
+    mkdir modules && wget -O modules/adduser.sh https://raw.githubusercontent.com/BlackFalconBot/FalconPi/master/modules/adduser.sh && chmod +x ./modules/adduser.sh 
+elif [ -d "$falconmodules" ]
+then 
+    echo "Modules Directory Exist"
+fi
+}
+
 function unsetup()
 {
 	echo "${GREEN}Users On this system${RESET}"
@@ -40,4 +51,5 @@ function unsetup()
 	echo "${GREEN}Reboot this device...${RESET}"
 }
 
+test
 unsetup
